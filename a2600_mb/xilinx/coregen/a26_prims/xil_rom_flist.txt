@@ -1,0 +1,9 @@
+# Output products list for <xil_rom>
+xil_rom.asy
+xil_rom.mif
+xil_rom.ngc
+xil_rom.sym
+xil_rom.vhd
+xil_rom.vho
+xil_rom.xco
+xil_rom_flist.txt

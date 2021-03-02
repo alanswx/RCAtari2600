@@ -1,0 +1,8 @@
+# Output products list for <scanlram_2kx9>
+scanlram_2kx9.asy
+scanlram_2kx9.ngc
+scanlram_2kx9.sym
+scanlram_2kx9.vhd
+scanlram_2kx9.vho
+scanlram_2kx9.xco
+scanlram_2kx9_flist.txt

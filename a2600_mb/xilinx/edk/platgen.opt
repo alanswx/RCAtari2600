@@ -1,0 +1,11 @@
+-p
+xc3s400tq144-5
+-lang
+vhdl
+-toplevel
+no
+-ti
+system
+-st
+xst
+system.mhs

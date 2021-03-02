@@ -1,0 +1,8 @@
+# Output products list for <dpr_512x12_xil>
+dpr_512x12_xil.asy
+dpr_512x12_xil.ngc
+dpr_512x12_xil.sym
+dpr_512x12_xil.vhd
+dpr_512x12_xil.vho
+dpr_512x12_xil.xco
+dpr_512x12_xil_flist.txt

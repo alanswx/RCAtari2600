@@ -1,0 +1,9 @@
+# Output products list for <xil_riot_ram>
+xil_riot_ram.asy
+xil_riot_ram.mif
+xil_riot_ram.ngc
+xil_riot_ram.sym
+xil_riot_ram.vhd
+xil_riot_ram.vho
+xil_riot_ram.xco
+xil_riot_ram_flist.txt

@@ -1,0 +1,20 @@
+# Date: Sat Jan 06 16:32:39 2007
+SET flowvendor = Foundation_iSE
+SET vhdlsim = True
+SET verilogsim = False
+SET workingdirectory = C:\projects\a2600_mb\xilinx\coregen\a26_prims\tmp
+SET speedgrade = -4
+SET simulationfiles = Behavioral
+SET asysymbol = True
+SET addpads = False
+SET device = xc3s400
+SET implementationfiletype = Ngc
+SET busformat = BusFormatAngleBracketNotRipped
+SET foundationsym = False
+SET package = tq144
+SET createndf = False
+SET designentry = VHDL
+SET devicefamily = spartan3
+SET formalverification = False
+SET removerpms = False
+

@@ -1,0 +1,203 @@
+# ##############################################################################
+# Created by Base System Builder Wizard for Xilinx EDK 8.1.02 Build EDK_I.20.4
+# Tue Jan 30 15:32:22 2007
+# Target Board:  Custom
+# Family:	 spartan3
+# Device:	 xc3s400
+# Package:	 fg456
+# Speed Grade:	 -5
+# Processor: Microblaze
+# System clock frequency: 50.000000 MHz
+# Debug interface: On-Chip HW Debug Module
+# On Chip Memory :  16 KB
+# Total Off Chip Memory : 512 KB
+# - Generic_External_Memory = 512 KB
+# ##############################################################################
+
+
+ PARAMETER VERSION = 2.1.0
+
+
+ PORT fpga_0_RS232_req_to_send_pin = net_gnd, DIR = O
+ PORT fpga_0_RS232_RX_pin = fpga_0_RS232_RX, DIR = I
+ PORT fpga_0_RS232_TX_pin = fpga_0_RS232_TX, DIR = O
+ PORT fpga_0_Generic_GPIO_GPIO_d_out_pin = fpga_0_Generic_GPIO_GPIO_d_out, DIR = O, VEC = [0:31]
+ PORT fpga_0_Generic_GPIO_GPIO_in_pin = fpga_0_Generic_GPIO_GPIO_in, DIR = I, VEC = [0:31]
+ PORT fpga_0_Generic_GPIO_GPIO_t_out_pin = fpga_0_Generic_GPIO_GPIO_t_out, DIR = O, VEC = [0:31]
+ PORT fpga_0_Generic_GPIO_GPIO_IO_pin = fpga_0_Generic_GPIO_GPIO_IO, DIR = IO, VEC = [0:31]
+ PORT fpga_0_Mem_A_pin = fpga_0_Generic_External_Memory_Mem_A, DIR = O, VEC = [0:31]
+ PORT fpga_0_Mem_BEN_pin = fpga_0_Generic_External_Memory_Mem_BEN, DIR = O, VEC = [0:1]
+ PORT fpga_0_Mem_WEN_pin = fpga_0_Generic_External_Memory_Mem_WEN, DIR = O
+ PORT fpga_0_Mem_OEN_pin = fpga_0_Generic_External_Memory_Mem_OEN, DIR = O, VEC = [0:0]
+ PORT fpga_0_Mem_CEN_pin = fpga_0_Generic_External_Memory_Mem_CEN, DIR = O, VEC = [0:0]
+ PORT sys_clk_pin = dcm_clk_s, DIR = I, SIGIS = DCMCLK
+ PORT sys_rst_pin = sys_rst_s, DIR = I
+ PORT fpga_0_Mem_DQ_I_pin = Generic_External_Memory_Mem_DQ_I, DIR = I, VEC = [0:15]
+ PORT fpga_0_Mem_DQ_O_pin = Generic_External_Memory_Mem_DQ_O, DIR = O, VEC = [0:15]
+ PORT fpga_0_Mem_DQ_T_pin = Generic_External_Memory_Mem_DQ_T, DIR = O, VEC = [0:15]
+
+
+BEGIN microblaze
+ PARAMETER INSTANCE = microblaze_0
+ PARAMETER HW_VER = 4.00.a
+ PARAMETER C_USE_FPU = 0
+ PARAMETER C_DEBUG_ENABLED = 1
+ PARAMETER C_NUMBER_OF_PC_BRK = 2
+ BUS_INTERFACE DLMB = dlmb
+ BUS_INTERFACE ILMB = ilmb
+ BUS_INTERFACE DOPB = mb_opb
+ BUS_INTERFACE IOPB = mb_opb
+ PORT CLK = sys_clk_s
+ PORT DBG_CAPTURE = DBG_CAPTURE_s
+ PORT DBG_CLK = DBG_CLK_s
+ PORT DBG_REG_EN = DBG_REG_EN_s
+ PORT DBG_TDI = DBG_TDI_s
+ PORT DBG_TDO = DBG_TDO_s
+ PORT DBG_UPDATE = DBG_UPDATE_s
+END
+
+BEGIN opb_v20
+ PARAMETER INSTANCE = mb_opb
+ PARAMETER HW_VER = 1.10.c
+ PARAMETER C_EXT_RESET_HIGH = 0
+ PORT SYS_Rst = sys_rst_s
+ PORT OPB_Clk = sys_clk_s
+END
+
+BEGIN opb_mdm
+ PARAMETER INSTANCE = debug_module
+ PARAMETER HW_VER = 2.00.a
+ PARAMETER C_MB_DBG_PORTS = 1
+ PARAMETER C_USE_UART = 1
+ PARAMETER C_UART_WIDTH = 8
+ PARAMETER C_BASEADDR = 0x41400000
+ PARAMETER C_HIGHADDR = 0x4140ffff
+ BUS_INTERFACE SOPB = mb_opb
+ PORT OPB_Clk = sys_clk_s
+ PORT DBG_CAPTURE_0 = DBG_CAPTURE_s
+ PORT DBG_CLK_0 = DBG_CLK_s
+ PORT DBG_REG_EN_0 = DBG_REG_EN_s
+ PORT DBG_TDI_0 = DBG_TDI_s
+ PORT DBG_TDO_0 = DBG_TDO_s
+ PORT DBG_UPDATE_0 = DBG_UPDATE_s
+END
+
+BEGIN lmb_v10
+ PARAMETER INSTANCE = ilmb
+ PARAMETER HW_VER = 1.00.a
+ PARAMETER C_EXT_RESET_HIGH = 0
+ PORT SYS_Rst = sys_rst_s
+ PORT LMB_Clk = sys_clk_s
+END
+
+BEGIN lmb_v10
+ PARAMETER INSTANCE = dlmb
+ PARAMETER HW_VER = 1.00.a
+ PARAMETER C_EXT_RESET_HIGH = 0
+ PORT SYS_Rst = sys_rst_s
+ PORT LMB_Clk = sys_clk_s
+END
+
+BEGIN lmb_bram_if_cntlr
+ PARAMETER INSTANCE = dlmb_cntlr
+ PARAMETER HW_VER = 1.00.b
+ PARAMETER C_BASEADDR = 0x00000000
+ PARAMETER C_HIGHADDR = 0x00001fff
+ BUS_INTERFACE SLMB = dlmb
+ BUS_INTERFACE BRAM_PORT = dlmb_port
+END
+
+BEGIN lmb_bram_if_cntlr
+ PARAMETER INSTANCE = ilmb_cntlr
+ PARAMETER HW_VER = 1.00.b
+ PARAMETER C_BASEADDR = 0x00000000
+ PARAMETER C_HIGHADDR = 0x00001fff
+ BUS_INTERFACE SLMB = ilmb
+ BUS_INTERFACE BRAM_PORT = ilmb_port
+END
+
+BEGIN bram_block
+ PARAMETER INSTANCE = lmb_bram
+ PARAMETER HW_VER = 1.00.a
+ BUS_INTERFACE PORTA = ilmb_port
+ BUS_INTERFACE PORTB = dlmb_port
+END
+
+BEGIN opb_emc
+ PARAMETER INSTANCE = Generic_External_Memory
+ PARAMETER HW_VER = 2.00.a
+ PARAMETER C_MAX_MEM_WIDTH = 16
+ PARAMETER C_MEM0_WIDTH = 16
+ PARAMETER C_SYNCH_MEM_0 = 0
+ PARAMETER C_OPB_CLK_PERIOD_PS = 20000
+ PARAMETER C_NUM_BANKS_MEM = 1
+ PARAMETER C_INCLUDE_DATAWIDTH_MATCHING_0 = 1
+ PARAMETER C_TCEDV_PS_MEM_0 = 15000
+ PARAMETER C_TWC_PS_MEM_0 = 15000
+ PARAMETER C_TAVDV_PS_MEM_0 = 15000
+ PARAMETER C_TWP_PS_MEM_0 = 12000
+ PARAMETER C_THZCE_PS_MEM_0 = 7000
+ PARAMETER C_TLZWE_PS_MEM_0 = 0
+ PARAMETER C_MEM0_BASEADDR = 0x20080000
+ PARAMETER C_MEM0_HIGHADDR = 0x200fffff
+ BUS_INTERFACE SOPB = mb_opb
+ PORT OPB_Clk = sys_clk_s
+ PORT Mem_A = fpga_0_Generic_External_Memory_Mem_A
+ PORT Mem_BEN = fpga_0_Generic_External_Memory_Mem_BEN
+ PORT Mem_WEN = fpga_0_Generic_External_Memory_Mem_WEN
+ PORT Mem_OEN = fpga_0_Generic_External_Memory_Mem_OEN
+ PORT Mem_CEN = fpga_0_Generic_External_Memory_Mem_CEN
+ PORT Mem_DQ_I = Generic_External_Memory_Mem_DQ_I
+ PORT Mem_DQ_O = Generic_External_Memory_Mem_DQ_O
+ PORT Mem_DQ_T = Generic_External_Memory_Mem_DQ_T
+END
+
+BEGIN opb_uartlite
+ PARAMETER INSTANCE = RS232
+ PARAMETER HW_VER = 1.00.b
+ PARAMETER C_BAUDRATE = 115200
+ PARAMETER C_DATA_BITS = 8
+ PARAMETER C_ODD_PARITY = 1
+ PARAMETER C_USE_PARITY = 0
+ PARAMETER C_CLK_FREQ = 57272727
+ PARAMETER C_BASEADDR = 0x40600000
+ PARAMETER C_HIGHADDR = 0x4060ffff
+ BUS_INTERFACE SOPB = mb_opb
+ PORT OPB_Clk = sys_clk_s
+ PORT RX = fpga_0_RS232_RX
+ PORT TX = fpga_0_RS232_TX
+END
+
+BEGIN opb_gpio
+ PARAMETER INSTANCE = Generic_GPIO
+ PARAMETER HW_VER = 3.01.b
+ PARAMETER C_ALL_INPUTS = 0
+ PARAMETER C_GPIO_WIDTH = 32
+ PARAMETER C_IS_BIDIR = 0
+ PARAMETER C_IS_DUAL = 0
+ PARAMETER C_DOUT_DEFAULT = 0xffffffff
+ PARAMETER C_BASEADDR = 0x40000000
+ PARAMETER C_HIGHADDR = 0x4000ffff
+ BUS_INTERFACE SOPB = mb_opb
+ PORT OPB_Clk = sys_clk_s
+ PORT GPIO_d_out = fpga_0_Generic_GPIO_GPIO_d_out
+ PORT GPIO_in = fpga_0_Generic_GPIO_GPIO_in
+ PORT GPIO_t_out = fpga_0_Generic_GPIO_GPIO_t_out
+ PORT GPIO_IO = fpga_0_Generic_GPIO_GPIO_IO
+END
+
+BEGIN dcm_module
+ PARAMETER INSTANCE = dcm_0
+ PARAMETER HW_VER = 1.00.a
+ PARAMETER C_CLK0_BUF = TRUE
+ PARAMETER C_CLKIN_PERIOD = 20.000000
+ PARAMETER C_CLK_FEEDBACK = 1X
+ PARAMETER C_DLL_FREQUENCY_MODE = LOW
+ PARAMETER C_EXT_RESET_HIGH = 1
+ PORT CLKIN = dcm_clk_s
+ PORT CLK0 = sys_clk_s
+ PORT CLKFB = sys_clk_s
+ PORT RST = net_gnd
+ PORT LOCKED = dcm_0_lock
+END
+

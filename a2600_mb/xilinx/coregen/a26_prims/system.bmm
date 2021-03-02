@@ -1,0 +1,10 @@
+// File: C:\projects\a2600_mb\xilinx\edk\implementation\system.bmm
+
+ADDRESS_BLOCK lmb_bram RAMB16 [0x00000000:0x00001fff]
+	BUS_BLOCK
+	mb_sys_0/lmb_bram/lmb_bram/ramb16_s9_s9_0 [31:24] ;
+	mb_sys_0/lmb_bram/lmb_bram/ramb16_s9_s9_1 [23:16] ;
+	mb_sys_0/lmb_bram/lmb_bram/ramb16_s9_s9_2 [15:8] ;
+	mb_sys_0/lmb_bram/lmb_bram/ramb16_s9_s9_3 [7:0] ;
+	END_BUS_BLOCK;
+END_ADDRESS_BLOCK;

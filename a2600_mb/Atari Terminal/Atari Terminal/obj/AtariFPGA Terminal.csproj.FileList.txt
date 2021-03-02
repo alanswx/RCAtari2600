@@ -1,0 +1,18 @@
+bin\Debug\AtariFPGA Terminal.exe.config
+obj\Debug\AtariFPGA Terminal.exe
+obj\Debug\AtariFPGA Terminal.pdb
+bin\Debug\AtariFPGA Terminal.exe
+bin\Debug\AtariFPGA Terminal.pdb
+obj\Debug\ResolveAssemblyReference.cache
+obj\Debug\AtariFPGATerminal.Properties.Resources.resources
+obj\Debug\AtariFPGATerminal.frmTerminal.resources
+obj\Debug\AtariFPGA Terminal.csproj.GenerateResource.Cache
+bin\Release\AtariFPGA Terminal.exe.config
+bin\Release\AtariFPGA Terminal.exe
+bin\Release\AtariFPGA Terminal.pdb
+obj\Release\ResolveAssemblyReference.cache
+obj\Release\AtariFPGATerminal.Properties.Resources.resources
+obj\Release\AtariFPGATerminal.frmTerminal.resources
+obj\Release\AtariFPGA Terminal.csproj.GenerateResource.Cache
+obj\Release\AtariFPGA Terminal.exe
+obj\Release\AtariFPGA Terminal.pdb
