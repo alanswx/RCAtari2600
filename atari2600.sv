@@ -184,9 +184,14 @@ assign VGA_F1 = 0;
 assign VGA_SCALER = 0;
 wire speaker_r, speaker_l;
 assign AUDIO_S = 0;
-assign AUDIO_L = { 2'b0,speaker_l,speaker_l,speaker_l,3'b0,8'b0};
-assign AUDIO_R = { 2'b0,speaker_r,speaker_r,speaker_r,3'b0,8'b0};
+//assign AUDIO_L = { 2'b0,speaker_l,speaker_l,speaker_l,3'b0,8'b0};
+//assign AUDIO_R = { 2'b0,speaker_r,speaker_r,speaker_r,3'b0,8'b0};
 assign AUDIO_MIX = 0;
+
+assign AUDIO_L = { 2'b0,snd0,2'b0,8'b0};
+assign AUDIO_R = { 2'b0,snd1,2'b0,8'b0};
+	 wire [3:0] snd0;
+	 wire [3:0] snd1;
 
 assign LED_DISK = 0;
 assign LED_POWER = 0;
@@ -202,6 +207,7 @@ assign VIDEO_ARY = (!ar) ? 12'd3 : 12'd0;
 `include "build_id.v" 
 localparam CONF_STR = {
 	"Atari2600;;",
+	"FS1,A26;",
 	"-;",
 	"O89,Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
 	"-;",
@@ -220,6 +226,11 @@ wire  [1:0] buttons;
 wire [31:0] status;
 wire [10:0] ps2_key;
 	wire [15:0] joystick_0, joystick_1;
+wire        ioctl_download;
+wire [24:0] ioctl_addr;
+wire [7:0]  ioctl_dout;
+wire        ioctl_wr;
+wire [7:0]  ioctl_index;
 
 hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
 (
@@ -230,11 +241,17 @@ hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
 
 	.conf_str(CONF_STR),
 	.forced_scandoubler(forced_scandoubler),
+	.ioctl_addr(ioctl_addr),
+	.ioctl_dout(ioctl_dout),
+	.ioctl_wr(ioctl_wr),
+	.ioctl_download(ioctl_download),
+	.ioctl_index(ioctl_index),
+	.ioctl_wait(ioctl_wait),
 
 	.buttons(buttons),
 	.status(status),
 	.status_menumask({status[5]}),
-		.joystick_0(joystick_0),
+	.joystick_0(joystick_0),
 	.joystick_1(joystick_1),
 
 	.ps2_key(ps2_key)
@@ -242,16 +259,17 @@ hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
 
 ///////////////////////   CLOCKS   ///////////////////////////////
 
-wire clk_sys,clk_a26;
+wire clk_sys,clk_a26,clk_vid;
 pll pll
 (
 	.refclk(CLK_50M),
 	.rst(0),
-	.outclk_0(clk_sys), // 14.31MHz
-	.outclk_1(clk_a26) // 7.19MHz
+	.outclk_0(clk_vid), // 56MHz
+	.outclk_1(clk_sys), // 14.31MHz
+	.outclk_2(clk_a26) // 7.19MHz
 );
 
-wire reset = RESET | status[0] | buttons[1];
+wire reset = RESET | status[0] | buttons[1] | ioctl_download;
 
 //////////////////////////////////////////////////////////////////
 
@@ -261,20 +279,157 @@ wire HBlank;
 wire HSync;
 wire VBlank;
 wire VSync;
-wire ce_pix=clk_a26;
+wire blank_n;
+
 wire [7:0] video;
 
-wire [2:0] r,g,b;
-wire [7:0] rr = {r ,r,r[2:1]};
-wire [7:0] gg = {g ,g,g[2:1]};
-wire [7:0] bb = {b ,b,b[2:1]};
+wire [3:0] r,g,b;
+wire [7:0] rr = {r ,r};
+wire [7:0] gg = {g ,g};
+wire [7:0] bb = {b ,b};
+
+
+
+
+////////////////////////////  MEMORY  ///////////////////////////////////
+
+wire [3:0] force_bs;
+wire sc;
+
+wire pclk_0;
+
+logic [31:0] cart_size;
+logic [7:0] cart_data;
+wire [12:0] cart_addr;
+
+detect2600 detect2600
+(
+	.clk(clk_sys),
+	.addr(ioctl_addr[12:0]),
+	.enable(ioctl_wr & ioctl_download),
+	.data(ioctl_dout),
+	.force_bs(force_bs),
+	.sc(sc)
+);
+
+
+always_ff @(posedge clk_sys) begin
+	if (ioctl_download && ioctl_wr)
+		cart_size <= ioctl_addr  + 1'd1; // 32 bit 1
+end
+
+dpram_dc #(.widthad_a(13)) cart
+(
+	.address_a(cart_addr),
+	.clock_a(clk_a26),
+	.byteena_a(~ioctl_download),
+	.q_a(cart_data),
+
+	.address_b(ioctl_addr[12:0]),
+	.clock_b(clk_sys),
+	.data_b(ioctl_dout),
+	.wren_b(ioctl_wr & ioctl_download),
+	.byteena_b(1'b1)
+);
+
+
+	
+	
+cart2600 cart2600
+(
+	.reset(reset),
+	.clk(clk_sys),
+	.ph0_en(clk_a26),
+	.cpu_d_out(rom_rdata),
+	.cpu_d_in(rom_wdata),
+	.cpu_a(rom_addr[12:0]),
+	.sc(sc),
+	.force_bs(force_bs),
+	.rom_a(cart_addr),
+	.rom_do(cart_data),
+	.rom_size(cart_size)
+);	
+
 
 reg [3:0] ctl_l;
 reg [3:0] ctl_r;
 always @(posedge clk_sys) begin
-	ctl_l <= joystick_0[3:0]|joystick_1[3:0];
-	ctl_r <= joystick_0[3:0]|joystick_1[3:0];
+	ctl_l <= ~{joystick_0[3:0]|joystick_1[3:0]};
+	ctl_r <= ~{joystick_0[3:0]|joystick_1[3:0]};
 end
+
+
+wire [12:0] rom_addr;
+wire [7:0]  rom_rdata;
+wire [7:0]  rom_wdata;
+/*
+
+barnstorming barnstorming 
+(
+.addr(rom_addr[11:0]),
+.clk(clk_a26),
+.data(rom_rdata)
+);
+*/
+wire pix_ref;
+
+a2600_core a2600_core(
+	.clk2x(clk_sys),
+	.clk(clk_a26),
+	.reset(reset),
+	.ref_newline(),
+	.pix_ref(pix_ref),
+	.system_rst(),
+	
+	.ctl_l(ctl_l),
+	.ctl_l_o(),
+	.pad_l_0(),
+	.pad_l_1(),
+	.trig_l(~joystick_0[4]),
+	
+	.ctl_r(ctl_r),
+	.ctl_r_o(),
+	.pad_r_0(),
+	.pad_r_1(),
+	.trig_r(~joystick_0[4]),
+	
+	.rom_addr(rom_addr),
+	.rom_rdata(rom_rdata),
+	.rom_wdata(rom_wdata),
+
+    .bw_col(1'b1),
+    .diff_l(status[3]),
+    .diff_r(status[4]),
+    .gamesel(~joystick_0[8]),
+    .start(~joystick_0[7]),
+
+ 	 .vid_lum(vid_lum),
+	 .vid_col(vid_col),
+	 
+	 .vid_hsyn(HSync),
+	 .vid_vsyn(VSync),
+	 
+	 .vid_vblank(VBlank),
+	 .vid_hblank(HBlank),
+	  
+	 .aud_ch0(snd0),
+	 .aud_ch1(snd1)
+    
+    );
+	 
+	 wire [3:0] vid_col;
+	 wire [2:0] vid_lum;
+
+    a2600_12bit_color a2600_12bit_color (
+		.col(vid_col),
+		.lum(vid_lum),
+		
+		.red(r),
+		.grn(g),
+		.blu(b)
+    ); 
+
+	 /*
 
 a2600_mb_altium_2 a2600_mb_altium_2 
 (
@@ -294,8 +449,8 @@ a2600_mb_altium_2 a2600_mb_altium_2
     .bw_col(1'b1),
     .diff_l(status[3]),
     .diff_r(status[4]),
-    .gamesel(joystick_0[8]),
-    .start(joystick_0[7]),
+    .gamesel(~joystick_0[8]),
+    .start(~joystick_0[7]),
 
 	 
 	 .red(r),
@@ -303,85 +458,34 @@ a2600_mb_altium_2 a2600_mb_altium_2
 	 .blu(b),
 	 .hsync(HSync),
 	 .vsync(VSync),
-	 .lcd_vblank(VBlank),
-    .lcd_hblank(HBlank),
+	 .blank_n(blank_n),
+	 .vid_vblank(VBlank),
+	 .vid_hblank(HBlank),
+	 
 
 	 .speaker_r(speaker_r),
 	 .speaker_l(speaker_l),
 
-	 
-    /*-------------------------------------------------------
-    -- DB9 controller ports:
-    -------------------------------------------------------
-    -- Left 
-    -------------------------------------------------------*/
-/*
-    ctl_l            : inout std_logic_vector(3 downto 0); -- Joystick / Keypad input (pins 1 to 4)
-    pad_l_0          : in    std_logic;                    -- Analog (paddle) 0 input (pin 5)
-    pad_l_1          : in    std_logic;                    -- Analog (paddle) 1 input (pin 9)
-    trig_l           : in    std_logic;                    -- Left trigger input      (pin 6)
-    -------------------------------------------------------
-    -- Right
-    -------------------------------------------------------
-    ctl_r            : inout std_logic_vector(3 downto 0); -- Joystick / Keypad input (pins 1 to 4)
-    pad_r_0          : in    std_logic;                    -- Analog (paddle) 0 input (pin 5)
-    pad_r_1          : in    std_logic;                    -- Analog (paddle) 1 input (pin 9)
-    trig_r           : in    std_logic;                    -- Left trigger input      (pin 6)
-    -------------------------------------------------------
-    
-    -------------------------------------------------------
-    -- Video outputs
-    -------------------------------------------------------
-    red               : out   std_logic_vector(2 downto 0);
-    grn               : out   std_logic_vector(2 downto 0);
-    blu               : out   std_logic_vector(2 downto 0);
-    hsync             : out   std_logic;
-    vsync             : out   std_logic;
-    
-    -------------------------------------------------------
-    -- Audio outputs
-    -------------------------------------------------------
-    speaker_r         : out   std_logic;
-    speaker_l         : out   std_logic;
-    
-    -------------------------------------------------------
-    -- UART pins
-    -------------------------------------------------------
-    uart_tx           : out   std_logic;
-    uart_rx           : in    std_logic;
-    uart_rts          : out   std_logic;
-    uart_cts          : in    std_logic;
-    
-    -- LED pins for debugging
-    leds              : out   std_logic_vector(7 downto 0);
+	 .aout0(snd0), 
+    .aout1(snd1)
 
-    -- 7 Seg. display
-    dig0_seg          : out   std_logic_vector(7 downto 0);
-    dig1_seg          : out   std_logic_vector(7 downto 0);
-    dig2_seg          : out   std_logic_vector(7 downto 0);
-    dig3_seg          : out   std_logic_vector(7 downto 0);
-    dig4_seg          : out   std_logic_vector(7 downto 0);
-    dig5_seg          : out   std_logic_vector(7 downto 0);
-    
-    -------------------------------------------------------
-    -- Memory bus
-    -------------------------------------------------------
-    sram_addr         : out   std_logic_vector(17 downto 0);
-    sram_data         : inout std_logic_vector(15 downto 0);
-    sram_wen          : out   std_logic;
-    sram_cen          : out   std_logic;
-    sram_oen          : out   std_logic;
-    sram_ub           : out   std_logic;
-    sram_lb           : out   std_logic
-*/
 );
+*/
 
-assign CLK_VIDEO = clk_sys;
-assign CE_PIXEL = ce_pix;
+reg ce_pix;
+always @(posedge clk_sys) begin
+	reg  div;
+	div <= ~div;
+	ce_pix <= !div;
+end
+
+assign CLK_VIDEO = clk_vid;
+//assign CE_PIXEL = ce_pix;
+assign CE_PIXEL = pix_ref;
 
 assign VGA_DE = ~(HBlank | VBlank);
-assign VGA_HS = HSync;
-assign VGA_VS = VSync;
+assign VGA_HS = ~HSync;
+assign VGA_VS = ~VSync;
 assign VGA_G  = gg;
 assign VGA_R  = rr;
 assign VGA_B  = bb;

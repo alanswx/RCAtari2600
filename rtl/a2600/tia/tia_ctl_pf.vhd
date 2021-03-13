@@ -100,6 +100,7 @@ port
    vid_vsync    : out std_logic;
    vid_cburst   : out std_logic;
    vid_blank    : out std_logic;
+   vid_hblank   : out std_logic;
 
    -- The following signals are related to horizontal
    -- motion.  These are to be used as simulation
@@ -224,6 +225,7 @@ architecture rtl of tia_ctl_pf is
 
    -- Signals used to generate the HBLANK signal
    signal clr_hblank_lat    : std_logic; -- Clears the HBLANK latch
+   signal clr_hblank_lat_normal    : std_logic;
    signal regular_hblank    : std_logic; -- "hblank fires normally"
    signal late_hblank       : std_logic; -- "hblank fires 8 cycles late"
    signal gate_regular      : std_logic; -- AND gate indicating reg. blank
@@ -935,6 +937,7 @@ begin
    -- reset hblank" arrives (i.e. motion).
 
    clr_hblank_lat <= sec or reset_sys;
+   clr_hblank_lat_normal <= rhb_i or reset_sys;
 
    hblank_latch_0 : tia_latch
    port map(
@@ -943,6 +946,15 @@ begin
         set    => shb,
         clear  => clr_hblank_lat,
         output => regular_hblank -- normal hblank if high
+   );
+
+   hblank_latch_1 : tia_latch
+   port map(
+
+        clk    => clk,
+        set    => shb,
+        clear  => clr_hblank_lat_normal,
+        output => vid_hblank -- normal hblank if high
    );
 
    -- This indicates that we fire hblank late

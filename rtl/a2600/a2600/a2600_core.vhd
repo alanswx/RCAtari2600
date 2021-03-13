@@ -31,6 +31,7 @@ port
 
     -- Clock and reset
     clk         : in std_logic;                       -- Use 2x the main osc clock
+    clk2x         : in std_logic;                       -- Use 2x the main osc clock
     reset       : in std_logic;                       -- Master, primary reset
 
     -- synthesis translate_off
@@ -79,6 +80,8 @@ port
     vid_csyn    : out std_logic;                    -- Composite sync
     vid_cb      : out std_logic;                    -- Colorburst
     vid_blank_n : out std_logic;                    -- Blank!...register on a pix clk tick!
+    vid_hblank : out std_logic;                    -- Blank!...register on a pix clk tick!
+    vid_vblank : out std_logic;                    -- Blank!...register on a pix clk tick!
 
     -- Audio Output
     aud_ch0     : out std_logic_vector(3 downto 0); -- Four bit audio channel 1
@@ -276,6 +279,7 @@ begin
     port map
     (
 
+      -- clkena            => clk,
        clk            => clk,
        master_reset   => reset,
        pix_ref        => pix_ref,
@@ -304,6 +308,9 @@ begin
        vid_color      => vid_col,      -- Requires a pix clk register!
        vid_cb         => vid_cb,
        vid_blank_n    => vid_blank_n,  -- Requires a pix clk register!
+       vid_vblank     => vid_vblank,
+       vid_hblank     => vid_hblank,
+
        aud_ch0        => aud_ch0,
        aud_ch1        => aud_ch1
 

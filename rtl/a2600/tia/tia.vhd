@@ -63,6 +63,8 @@ port
     vid_color      : out std_logic_vector(3 downto 0); -- Color 
     vid_cb         : out std_logic;                    -- Color burst 
     vid_blank_n    : out std_logic;                    -- Blank_n
+    vid_vblank     : out std_logic;                    -- vblank
+    vid_hblank     : out std_logic;
 
     -- Audio outputs
     aud_ch0        : out std_logic_vector(3 downto 0); -- Audio channel 0
@@ -244,6 +246,7 @@ architecture struct of tia is
     signal g_mis_1_del      : std_logic;
     signal g_pl_0_del       : std_logic;
     signal g_pl_1_del       : std_logic;
+    signal hblank           : std_logic;
 
 begin
 
@@ -253,9 +256,11 @@ begin
                    not(cpu_cs2n) and 
                    not(cpu_cs3n);
 
+    vid_vblank <= vblank;
+
     rsync <= '0'; -- Tie off for z26 comparison
 
-    gnd <= '0';
+    --gnd <= '0';
 
     -- This component controls clocking and
     -- resets for the system...
@@ -305,8 +310,8 @@ begin
        rwn          => cpu_rwn,
        vsync        => vsync,
        vblank       => vblank,
-       vbl_ena_i4i5 => vbl_ena_i4i5,
-       vbl_dump_prt => vbl_dump_prt,
+       --vbl_ena_i4i5 => vbl_ena_i4i5,
+       --vbl_dump_prt => vbl_dump_prt,
        wsync        => wsync,
        --rsync        => rsync, 
        rsync        => open, 
@@ -355,7 +360,7 @@ begin
        resmp0       => resmp0,
        resmp1       => resmp1,
        hmove        => hmove,
-       hmclr        => hmclr,
+       --hmclr        => hmclr,
        cxclr        => cxclr
 
     );
@@ -461,6 +466,7 @@ begin
        vid_vsync    => vid_vsync,
        vid_cburst   => vid_cb,
        vid_blank    => blank_i,
+       vid_hblank   => vid_hblank,
        -- synthesis translate_off
        ref_motclk   => ref_motclk,
        ref_en_blm_n => ref_en_blm_n,
@@ -474,9 +480,9 @@ begin
        p0_mot       => p0_mot,
        m0_mot       => m0_mot,
        p1_mot       => p1_mot,
-       m1_mot       => m1_mot,
-       aud_clk1     => aud_clk1,
-       aud_clk2     => aud_clk2
+       m1_mot       => m1_mot
+       --aud_clk1     => aud_clk1,
+       --aud_clk2     => aud_clk2
 
     );
 

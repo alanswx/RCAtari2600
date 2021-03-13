@@ -600,6 +600,7 @@ package tia_pkg is
      vid_vsync    : out std_logic;
      vid_cburst   : out std_logic;
      vid_blank    : out std_logic;
+     vid_hblank   : out std_logic;
 
      -- The following signals are related to horizontal
      -- motion.  These are to be used as simulation

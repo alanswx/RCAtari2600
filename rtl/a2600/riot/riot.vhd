@@ -160,14 +160,14 @@ ram_write <= not(rwn);
 --
 --);
 
-pia_ram : work.dpram generic map (7,8)
+pia_ram : work.dpram_dc generic map (" ",7,8)
 port map
 (
 	clock_a   => clk,
 	wren_a    => ram_write,
 	address_a => addr,
 	data_a    => din,
-	enable_a  => ramsel,
+	byteena_a(0)  => ramsel,
 	q_a       => ram_rdata,
 	address_b => "0000000",
 	clock_b => clk
