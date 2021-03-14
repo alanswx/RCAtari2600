@@ -61,7 +61,7 @@ reset_n <= not(reset);
 a <= a_i(12 downto 0);
 
 -- 6502 instantiation
-u0 : T65
+u0 : work.T65
      port map(
          Mode     => "00",
          Res_n    => reset_n,

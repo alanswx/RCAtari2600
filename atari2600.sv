@@ -214,6 +214,7 @@ localparam CONF_STR = {
 	"O3,Difficulty P1,B,A;",
 	"O4,Difficulty P2,B,A;",
 	"-;",
+	"O5;Pause,Off,On;",
 	"R0,Reset and close OSD;",
 	"J1,Fire 1,Stick Btn,Paddle Btn,Game Reset,Game Select,Pause,Fire 2,Switch B/W,P1 difficulty,P2 difficulty;",
 	"jn,A,B,X|P,Start,Select,L,Y;",
@@ -260,17 +261,21 @@ hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
 ///////////////////////   CLOCKS   ///////////////////////////////
 
 wire clk_sys,clk_a26,clk_vid;
+assign clk_sys=clk_a26; // try slowing the sys clock for timing
 pll pll
 (
 	.refclk(CLK_50M),
 	.rst(0),
 	.outclk_0(clk_vid), // 56MHz
-	.outclk_1(clk_sys), // 14.31MHz
+	.outclk_1(clk_sys_old), // 14.31MHz
 	.outclk_2(clk_a26) // 7.19MHz
 );
 
-wire reset = RESET | status[0] | buttons[1] | ioctl_download;
-
+logic reset;
+always @(posedge clk_sys)
+begin
+	reset <= RESET | status[0] | buttons[1] | ioctl_download;
+end
 //////////////////////////////////////////////////////////////////
 
 wire [1:0] col = status[4:3];
@@ -284,12 +289,16 @@ wire blank_n;
 wire [7:0] video;
 
 wire [3:0] r,g,b;
+
 wire [7:0] rr = {r ,r};
 wire [7:0] gg = {g ,g};
 wire [7:0] bb = {b ,b};
 
-
-
+/*
+wire [7:0] rr ;
+wire [7:0] gg ;
+wire [7:0] bb ;
+*/
 
 ////////////////////////////  MEMORY  ///////////////////////////////////
 
@@ -381,7 +390,8 @@ barnstorming barnstorming
 */
 wire pix_ref;
 
-a2600_core a2600_core(
+//a2600_core a2600_core(
+top2600 top2600(
 	.clk2x(clk_sys),
 	.clk(clk_a26),
 	.reset(reset),
@@ -389,6 +399,8 @@ a2600_core a2600_core(
 	.pix_ref(pix_ref),
 	.system_rst(),
 	
+	.PAin(PAin),
+	.PBin(PBin),
 	.ctl_l(ctl_l),
 	.ctl_l_o(),
 	.pad_l_0(),
@@ -437,49 +449,107 @@ a2600_core a2600_core(
 		.blu(b)
     ); 
 
-	 /*
+	 
+// Atari 2600 port map
+// PA: {Lpin4, Lpin3, Lpin2, Lpin1, Rpin4, Rpin3, Rpin2, Rpin1} - Controller ports (R, L, D, U is the pin order)
+// PB7: Difficulty Right - 1 = A, 0 = B
+// PB6: Difficulty Left  - 1 = A, 0 = B
+// PB5: 0
+// PB4: 0
+// PB3: Color/BW         - 1 = Color, 0 = B&W
+// PB2: 0
+// PB1: Select           - 1 = Released, 0 = Pressed
+// PB0: Start            - 1 = Released, 0 = Pressed
 
-a2600_mb_altium_2 a2600_mb_altium_2 
+logic [1:0] ilatch;
+logic [7:0] PAin, PBin, PAout, PBout;
+
+wire joya_b2 = ~PBout[2] ;
+wire joyb_b2 = ~PBout[4] ;
+
+logic [15:0] joy1, joy0;
+assign joy0=joystick_0;
+assign joy1=joystick_1;
+
+logic [15:0] joya, joyb;
+assign joya = status[7] ? joy1 : joy0;
+assign joyb = status[7] ? joy0 : joy1;
+
+
+assign PBin[7] = ~status[3];              // Right diff
+assign PBin[6] = ~status[4];              // Left diff
+assign PBin[5] = 1'b1;                     // Unused
+assign PBin[4] = (~joya[6] & ~joyb[6]);              // 2600 B/W?
+assign PBin[3] =  ~status[5];   // Pause
+assign PBin[2] = 1'b1;                     // Unused
+assign PBin[1] = (~joya[7] & ~joyb[7]);    // Select
+assign PBin[0] = (~joya[8] & ~joyb[8]);    // Start/Reset 
+
+assign PAin[7:4] = {~joya[0], ~joya[1], ~joya[2], ~joya[3]}; // P1: R L D U or PA PB 1 1
+assign PAin[3:0] = {~joyb[0], ~joyb[1], ~joyb[2], ~joyb[3]}; // P2: R L D U or PA PB 1 1
+
+// In two button mode, pin 6 is pulled up strongly, and won't lower
+// In one button mode, it will lower if *either* pin 5 or 9 are pressed
+assign ilatch[0] = joya_b2 ? 1'b1 : ~(joya[4] || joya[5]); // P1 Fire
+assign ilatch[1] = joyb_b2 ? 1'b1 : ~(joyb[4] || joyb[5]); // P2 Fire
+
+// These will continue to weakly pull up when pressed, even in one button mode.
+wire pada_0 = joya[4];
+wire pada_1 = joya[5];
+wire padb_0 = joyb[4];
+wire padb_1 = joyb[5];
+/*
+	 
+system2600 system2600
 (
-    // Input reference clock (14.31MHz)
-    .clk(clk_sys),
-    .a26_sysclk(clk_a26),
-	 .a26_powon_rst(reset),
+	.clk(),
+	.clk2(clk_a26),
+	.rst(reset),
+	.di(rom_rdata_l),
+	.pa(PAin),
+	.pb(PBin),
+	
+	.paddle_0(),
+	.paddle_1(),
+	.paddle_2(),
+	.paddle_3(),
+	
+	.paddle_ena1(),
+	.paddle_ena2(),
+	
+	.inpt4(),
+	.inpt5(),
+	
+	.d_o(rom_wdata),
+	.a(rom_addr),
+	
+	.r(), // cpu_rwn
+	.colu(), // from tia
+	.vsyn(VSync),
+	.hsyn(HSync),
+	.hblank(HBlank),
+	.vblank(VBlank),
+	.rgbx2( { rr, gg, bb }),
 
-    //.pix_clk_ref(ce_pix),
-
-	 .ctl_l(ctl_l),
-	 .trig_l(joystick_0[4]),
-	 .ctl_r(ctl_r),
-	 .trig_r(joystick_1[4]),
+	 .au0(),
+	 .au1(),
 	 
-
-    .bw_col(1'b1),
-    .diff_l(status[3]),
-    .diff_r(status[4]),
-    .gamesel(~joystick_0[8]),
-    .start(~joystick_0[7]),
-
-	 
-	 .red(r),
-	 .grn(g),
-	 .blu(b),
-	 .hsync(HSync),
-	 .vsync(VSync),
-	 .blank_n(blank_n),
-	 .vid_vblank(VBlank),
-	 .vid_hblank(HBlank),
-	 
-
-	 .speaker_r(speaker_r),
-	 .speaker_l(speaker_l),
-
-	 .aout0(snd0), 
-    .aout1(snd1)
-
+	 .av0(snd0),
+	 .av1(snd1),
+	
+	.ph0_out(),
+	.ph2_out(),
+	.audio_mono(),
+	
+	.video_de(video_de),
+	.audio_de(audio_de),
+	.clocks_de(clocks_de)
 );
-*/
-
+*/	 
+wire video_de=1'b0;
+wire audio_de=1'b0;
+wire clocks_de=1'b0;
+	 
 reg ce_pix;
 always @(posedge clk_sys) begin
 	reg  div;
