@@ -244,6 +244,8 @@ begin
 
     );
 
+
+	 
     -- Only the CPU can write data to the 2600
     -- "ROM" port...
     rom_wdata <= cpu_wdata;

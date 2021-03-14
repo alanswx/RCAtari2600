@@ -309,6 +309,7 @@ detect2600 detect2600
 	.enable(ioctl_wr & ioctl_download),
 	.data(ioctl_dout),
 	.force_bs(force_bs),
+	.cart_size(cart_size),
 	.sc(sc)
 );
 
@@ -340,9 +341,9 @@ cart2600 cart2600
 	.reset(reset),
 	.clk(clk_sys),
 	.ph0_en(clk_a26),
-	.cpu_d_out(rom_rdata),
-	.cpu_d_in(rom_wdata),
-	.cpu_a(rom_addr[12:0]),
+	.cpu_d_out_p(rom_rdata),
+	.cpu_d_in(rom_wdata_l),
+	.cpu_a(rom_addr_l[12:0]),
 	.sc(sc),
 	.force_bs(force_bs),
 	.rom_a(cart_addr),
@@ -358,7 +359,14 @@ always @(posedge clk_sys) begin
 	ctl_r <= ~{joystick_0[3:0]|joystick_1[3:0]};
 end
 
-
+reg [12:0] rom_addr_l;
+reg [7:0]rom_rdata_l;
+reg [7:0]rom_wdata_l;
+always @(posedge clk_sys) begin
+	rom_rdata_l <= rom_rdata;
+	rom_wdata_l <= rom_wdata;
+	rom_addr_l <= rom_addr;
+end
 wire [12:0] rom_addr;
 wire [7:0]  rom_rdata;
 wire [7:0]  rom_wdata;
@@ -394,7 +402,7 @@ a2600_core a2600_core(
 	.trig_r(~joystick_0[4]),
 	
 	.rom_addr(rom_addr),
-	.rom_rdata(rom_rdata),
+	.rom_rdata(rom_rdata_l),
 	.rom_wdata(rom_wdata),
 
     .bw_col(1'b1),

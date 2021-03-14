@@ -72,7 +72,7 @@ entity cart2600 is
 		clk       : in std_logic;
 		ph0_en    : in std_logic;
 
-		cpu_d_out : out std_logic_vector(7 downto 0);
+		cpu_d_out_p : out std_logic_vector(7 downto 0);
 		cpu_d_in  : in  std_logic_vector(7 downto 0);
 	   cpu_a     : in  std_logic_vector(12 downto 0);
 		
@@ -192,6 +192,10 @@ signal DpcClocks : unsigned(15 downto 0) := (others=>'0');
 signal clk_music : unsigned(3 downto 0) := (others=>'0');	 -- 3 e o melhor
 signal DpcClockDivider : unsigned(9 downto 0);
  
+ 
+ 
+signal last_cpu_d_out : std_logic_vector(7 downto 0);
+signal cpu_d_out : std_logic_vector(7 downto 0);
 begin
 
 --cpu_d_out <= cpu_d;
@@ -225,7 +229,7 @@ sc_a <= clr_a                                when rst = '1'    else
         "0000" & cpu_a(6 downto 0);
 
 -- ROM and SC output
-process(cpu_a, rom_do, sc_d_out, sc, bss, DpcFlags, DpcRandom, DpcMusicModes, DpcMusicFlags, soundAmplitudes, e7_bank0)
+process(cpu_a, rom_do, sc_d_out, sc, bss, DpcFlags, DpcRandom, DpcMusicModes, DpcMusicFlags, soundAmplitudes, e7_bank0, last_cpu_d_out)
 	variable ampI_v :std_logic_vector(2 downto 0);
 	variable masked0_v :std_logic_vector(7 downto 0);
 	variable masked1_v :std_logic_vector(7 downto 0);
@@ -276,8 +280,18 @@ begin
 --		cpu_d_out <= "ZZZZZZZZ";
 	elsif (cpu_a(12) = '1') then
 		cpu_d_out <= rom_do;
-	else
-		cpu_d_out <= "00000000";
+--	else -- ajs
+		--cpu_d_out <= "00000000";
+--		cpu_d_out <= last_cpu_d_out; -- ajs - kitrinx: "00000000";
+	end if;
+end process;
+
+cpu_d_out_p <= cpu_d_out;
+
+process (clk)
+begin
+	if rising_edge(clk) then
+		last_cpu_d_out <= cpu_d_out;
 	end if;
 end process;
 
@@ -489,8 +503,11 @@ begin
 end process;
 
 -- derive banking scheme from cartridge size
-process(rom_size, force_bs)
+
+
+process(clk,rom_size, force_bs)
 begin
+	if rising_edge(clk) then
 	if(force_bs /= "0000") then
 		bss <= force_bs;
 	elsif(rom_size  = '0'&x"0000") then
@@ -513,6 +530,7 @@ begin
 		bss <= BANK32;
 	else
 		bss <= BANK00;
+	end if;
 	end if;
 end process;
 
