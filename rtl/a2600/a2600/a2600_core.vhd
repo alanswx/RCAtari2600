@@ -45,6 +45,8 @@ port
     system_rst  : out std_logic;                      -- Not an actual Atari 2600 signal.
      
     -- Controller ports...
+    PAin       : in std_logic_vector(7 downto 0); --
+    PBin       : in std_logic_vector(7 downto 0); --
 
     -- Left Controller Port
     ctl_l       : in std_logic_vector(3 downto 0); -- Joystick / Keypad input (pins 1 to 4)
@@ -171,6 +173,8 @@ begin
     -- Joystick (etc.) inputs
     pia_port_a_in(7 downto 4) <= ctl_l;
     pia_port_a_in(3 downto 0) <= ctl_r;
+    --pia_port_a_in  <= PAin;
+    --pia_port_b_in  <= PBin;
 
     -- Drive port outputs (i.e. keypad)
     ctl_l_o <= pia_port_a(7 downto 4);

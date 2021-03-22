@@ -15,6 +15,7 @@ set_global_assignment -name SYSTEMVERILOG_FILE rtl/system_2600.sv
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/2600top.sv
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/TIA.sv
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/RIOT/M6532.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/vcart2600.sv
 set_global_assignment -name VHDL_FILE rtl/barnstorming.vhd
 set_global_assignment -name SDC_FILE atari2600.sdc
 set_global_assignment -name SYSTEMVERILOG_FILE atari2600.sv

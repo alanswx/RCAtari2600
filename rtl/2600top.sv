@@ -172,6 +172,11 @@ assign pia_port_b[5] = (pia_port_b_ctl[5] == 1'b1) ?  pia_port_b_out[5] : 1'bz;
 assign pia_port_b[6] = (pia_port_b_ctl[6] == 1'b1) ?  pia_port_b_out[6] : 1'bz;
 assign pia_port_b[7] = (pia_port_b_ctl[7] == 1'b1) ?  pia_port_b_out[7] : 1'bz;
 
+
+//pia_port_b_in(2) <= pia_port_b(2);
+//pia_port_b_in(4) <= pia_port_b(4);
+//pia_port_b_in(5) <= pia_port_b(5);
+
  //   -- Fake "latch last read" value from the databus...
 always @(posedge clk)
 begin
@@ -292,8 +297,8 @@ assign    rom_addr = cpu_addr[12:0];
        .vid_csync( vid_csyn),
        .vid_hsync (vid_hsyn),
        .vid_vsync (vid_vsyn),
-       .vid_lum  (vid_lum),   //   -- Requires a pix clk register!
-       .vid_color(vid_col),//      -- Requires a pix clk register!
+       .vid_lum  (vid_lum_l),   //   -- Requires a pix clk register!
+       .vid_color(vid_col_l),//      -- Requires a pix clk register!
        .vid_cb  ( vid_cb),
        .vid_blank_n(vid_blank_n),//  -- Requires a pix clk register!
        .vid_vblank(vid_vblank),
@@ -303,12 +308,63 @@ assign    rom_addr = cpu_addr[12:0];
        .aud_ch1(aud_ch1)
 
     );
-
 	 
+	 
+/*	 
+    tia2 tia2
+    (
+
+      //-- clkena            => clk,
+       .clk( clk),
+	output       phi0(cpu_p0_ref),
+	input        phi2(cpu_p0_ref_180),
+	output logic phi1,
+
+	 module TIA2
+(
+	// Original Pins
+	input        clk,
+	output       phi0,
+	input        phi2,
+	output logic phi1,
+	input        RW_n,
+	output logic   rdy,
+	input  [5:0] addr,
+	input  [7:0] d_in,
+	output [7:0] d_out,
+	input  [3:0] i,     // On real hardware, these would be ADC pins. i0..3
+	input        i4,
+	input        i5,
+	output [3:0] aud0,
+	output [3:0] aud1,
+	output [3:0] col,
+	output [2:0] lum,
+	output       BLK_n,
+	output       sync,
+	input        cs0_n,
+	input        cs2_n,
+
+	// Abstractions
+	input        rst,
+	input        ce,     // Clock enable for CLK generation only
+	input        video_ce,
+	output       vblank,
+	output       hblank,
+	output       hgap,
+	output       vsync,
+	output       hsync,
+	output       phi2_gen
+);
+*/
+	 
+	 
+     logic [2:0] vid_lum_l;    // Luma...register on a pix clk tick
+    logic [3:0]  vid_col_l;   // Color...register on a pix clk tick
     //-- Concurrent signal assignments (for outputs)
     always@(posedge clk) begin
 		system_rst <= system_rst_i;
-		
+		vid_lum<=vid_lum_l;
+		vid_col<=vid_col_l;
 		end 
 
 endmodule

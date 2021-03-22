@@ -290,10 +290,20 @@ wire [7:0] video;
 
 wire [3:0] r,g,b;
 
+
+reg [7:0] rr,gg,bb;
+always @(posedge clk_sys)
+begin
+	rr<= {r,r};
+	gg<= {g,g};
+	bb<= {b,b};
+end
+
+/*
 wire [7:0] rr = {r ,r};
 wire [7:0] gg = {g ,g};
 wire [7:0] bb = {b ,b};
-
+*/
 /*
 wire [7:0] rr ;
 wire [7:0] gg ;
@@ -351,8 +361,10 @@ cart2600 cart2600
 	.clk(clk_sys),
 	.ph0_en(clk_a26),
 	.cpu_d_out_p(rom_rdata),
-	.cpu_d_in(rom_wdata_l),
-	.cpu_a(rom_addr_l[12:0]),
+	//.cpu_d_in(rom_wdata_l),
+	.cpu_d_in(rom_wdata),
+	//.cpu_a(rom_addr_l[12:0]),
+	.cpu_a(rom_addr[12:0]),
 	.sc(sc),
 	.force_bs(force_bs),
 	.rom_a(cart_addr),
@@ -367,7 +379,7 @@ always @(posedge clk_sys) begin
 	ctl_l <= ~{joystick_0[3:0]|joystick_1[3:0]};
 	ctl_r <= ~{joystick_0[3:0]|joystick_1[3:0]};
 end
-
+/*
 reg [12:0] rom_addr_l;
 reg [7:0]rom_rdata_l;
 reg [7:0]rom_wdata_l;
@@ -376,6 +388,7 @@ always @(posedge clk_sys) begin
 	rom_wdata_l <= rom_wdata;
 	rom_addr_l <= rom_addr;
 end
+*/
 wire [12:0] rom_addr;
 wire [7:0]  rom_rdata;
 wire [7:0]  rom_wdata;
@@ -390,8 +403,8 @@ barnstorming barnstorming
 */
 wire pix_ref;
 
-//a2600_core a2600_core(
-top2600 top2600(
+a2600_core a2600_core(
+//top2600 top2600(
 	.clk2x(clk_sys),
 	.clk(clk_a26),
 	.reset(reset),
@@ -414,7 +427,8 @@ top2600 top2600(
 	.trig_r(~joystick_0[4]),
 	
 	.rom_addr(rom_addr),
-	.rom_rdata(rom_rdata_l),
+	//.rom_rdata(rom_rdata_l),
+	.rom_rdata(rom_rdata),
 	.rom_wdata(rom_wdata),
 
     .bw_col(1'b1),
@@ -436,7 +450,7 @@ top2600 top2600(
 	 .aud_ch1(snd1)
     
     );
-	 
+
 	 wire [3:0] vid_col;
 	 wire [2:0] vid_lum;
 
@@ -448,7 +462,7 @@ top2600 top2600(
 		.grn(g),
 		.blu(b)
     ); 
-
+	 
 	 
 // Atari 2600 port map
 // PA: {Lpin4, Lpin3, Lpin2, Lpin1, Rpin4, Rpin3, Rpin2, Rpin1} - Controller ports (R, L, D, U is the pin order)
@@ -499,6 +513,7 @@ wire pada_1 = joya[5];
 wire padb_0 = joyb[4];
 wire padb_1 = joyb[5];
 /*
+assign pix_ref = ce_pix;
 	 
 system2600 system2600
 (
